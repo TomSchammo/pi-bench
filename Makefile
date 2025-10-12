@@ -1,4 +1,4 @@
-# C-Bench Makefile
+# Pi-Bench Makefile
 # A high-performance C benchmarking library
 
 # Compiler and flags
@@ -19,7 +19,7 @@ HEADERS = bench.h stats.h system.h data_processing.h
 OBJECTS = $(SOURCES:%.c=$(OBJDIR)/%.o)
 
 # Target executable
-TARGET = $(BINDIR)/c-bench
+TARGET = $(BINDIR)/pi-bench
 
 # Default target
 all: $(TARGET)
@@ -61,16 +61,17 @@ debug: $(TARGET)
 release: CFLAGS += -DNDEBUG -O3 -flto
 release: $(TARGET)
 
-# Install (copy to /usr/local/bin)
-install: $(TARGET)
-	@echo "Installing c-bench to /usr/local/bin..."
-	sudo cp $(TARGET) /usr/local/bin/
+# Install headers to /usr/local/include/pi-bench
+install:
+	@echo "Installing pi-bench headers to /usr/local/include/pi-bench/..."
+	sudo mkdir -p /usr/local/include/pi-bench
+	sudo cp $(HEADERS) /usr/local/include/pi-bench/
 	@echo "Installation complete!"
 
 # Uninstall
 uninstall:
-	@echo "Removing c-bench from /usr/local/bin..."
-	sudo rm -f /usr/local/bin/c-bench
+	@echo "Removing pi-bench headers from /usr/local/include/pi-bench/..."
+	sudo rm -rf /usr/local/include/pi-bench
 	@echo "Uninstallation complete!"
 
 # Clean build artifacts
@@ -84,8 +85,8 @@ rebuild: clean all
 
 # Show help
 help:
-	@echo "C-Bench Makefile Help"
-	@echo "===================="
+	@echo "Pi-Bench Makefile Help"
+	@echo "======================"
 	@echo ""
 	@echo "Available targets:"
 	@echo "  all        - Build the benchmark executable (default)"
@@ -93,8 +94,8 @@ help:
 	@echo "  run-sudo   - Build and run with sudo (enables CPU pinning)"
 	@echo "  debug      - Build with debug symbols and no optimization"
 	@echo "  release    - Build optimized release version"
-	@echo "  install    - Install to /usr/local/bin"
-	@echo "  uninstall  - Remove from /usr/local/bin"
+	@echo "  install    - Install headers to /usr/local/include/pi-bench"
+	@echo "  uninstall  - Remove headers from /usr/local/include/pi-bench"
 	@echo "  clean      - Remove all build artifacts"
 	@echo "  rebuild    - Clean and rebuild"
 	@echo "  help       - Show this help message"
@@ -114,8 +115,8 @@ $(OBJDIR)/main.o: main.c bench.h stats.h system.h data_processing.h
 
 # Print build information
 info:
-	@echo "C-Bench Build Information"
-	@echo "========================="
+	@echo "Pi-Bench Build Information"
+	@echo "=========================="
 	@echo "Compiler: $(CC)"
 	@echo "Flags: $(CFLAGS)"
 	@echo "Libraries: $(LDFLAGS)"
