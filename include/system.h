@@ -26,6 +26,12 @@
   return val;
 }
 
+static inline void system_wait() {
+  for (volatile unsigned int i = 0; i < 1 << 15; i++) {
+    __asm__("nop");
+  }
+}
+
 /**
  * @brief Retrieves the current CPU temperature from the thermal zone.
  *

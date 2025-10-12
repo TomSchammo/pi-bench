@@ -115,6 +115,8 @@ typedef struct {
     disable_cpu_scaling(core);                                                 \
     printf("\033[33mDisabled CPU scaling for core %d!\033[0m\n", core);        \
                                                                                \
+    system_wait();                                                             \
+                                                                               \
     /* save old cpu set */                                                     \
     cpu_set_t old_set;                                                         \
     CPU_ZERO(&old_set);                                                        \
