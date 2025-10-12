@@ -33,6 +33,7 @@ typedef struct {
   uint64_t median;
   uint64_t min, max;
   double mean, stddev;
+  bool is_cycles;
 } benchmark_result_t;
 
 /**
@@ -54,6 +55,198 @@ typedef struct {
   benchmark_result_t *results;
   bool is_baseline;
 } benchmark_t;
+
+/**
+ * @brief Macro for running a benchmark with CPU core pinning and real-time
+ * scheduling.
+ *
+ * This macro provides a complete benchmark execution framework that:
+ * - Pins the process to a specific CPU core
+ * - Sets real-time scheduling priority
+ * - Blocks signals to prevent interruption
+ * - Performs warmup and timed iterations
+ * - Measures cycle counts with overhead compensation
+ * - Restores original system settings
+ *
+ * @param func_call The function call to benchmark (e.g., my_function())
+ * @param benchmark Pointer to benchmark_t structure with configuration
+ * @param core CPU core number to pin the benchmark to
+ *
+ * @note Requires appropriate privileges for CPU affinity and real-time
+ * scheduling
+ * @note Automatically handles system state restoration
+ * @note Should be used for single-core benchmarks
+ * @note Uses cycle counting for high-precision timing
+ * @note Includes thermal monitoring and system status reporting
+ */
+#define BENCHMARK_FUNC_PINNED(func_call, benchmark, core)                      \
+  do {                                                                         \
+                                                                               \
+    size_t warmup_iterations = benchmark->warmup_iterations;                   \
+    size_t timed_iterations = benchmark->timed_iterations;                     \
+                                                                               \
+    uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
+                                                                               \
+    printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
+                                                                               \
+    if (benchmark->is_baseline) {                                              \
+      printf("\033[32mThis is a baseline run!\033[0m\n");                      \
+    }                                                                          \
+                                                                               \
+    printf("\033[32mRunning %lu warmup iterations, followed by %lu timed "     \
+           "iterations...\033[0m\n",                                           \
+           warmup_iterations, timed_iterations);                               \
+                                                                               \
+    disable_cpu_scaling(core);                                                 \
+    printf("\033[33mDisabled CPU scaling for core %d!\033[0m\n", core);        \
+                                                                               \
+    system_wait();                                                             \
+                                                                               \
+    /* save old cpu set */                                                     \
+    cpu_set_t old_set;                                                         \
+    CPU_ZERO(&old_set);                                                        \
+    sched_getaffinity(0, sizeof(cpu_set_t), &old_set);                         \
+                                                                               \
+    /* pin process to a core */                                                \
+    cpu_set_t cpuset;                                                          \
+    CPU_ZERO(&cpuset);                                                         \
+    CPU_SET(core, &cpuset);                                                    \
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &cpuset) != 0) {               \
+      perror("Failed to set affinity!");                                       \
+    }                                                                          \
+                                                                               \
+    printf("\033[33mPinned process to core %d!\033[0m\n", core);               \
+                                                                               \
+    /* save old schduling policy */                                            \
+    int old_policy = sched_getscheduler(0);                                    \
+    struct sched_param old_sp;                                                 \
+    sched_getparam(0, &old_sp);                                                \
+                                                                               \
+    /* set priority to highest */                                              \
+    struct sched_param sp = {.sched_priority = 99};                            \
+    sched_setscheduler(0, SCHED_FIFO, &sp);                                    \
+                                                                               \
+    printf("\033[33mSet scheduling settings!\033[0m\n");                       \
+                                                                               \
+    block_all_signals_in_this_thread();                                        \
+    printf("\033[33mBlocking signals in current thread!\033[0m\n");            \
+                                                                               \
+    struct timespec start, end;                                                \
+                                                                               \
+    throttle_warning(MAX_TEMP);                                                \
+    get_system_status();                                                       \
+                                                                               \
+    /* Warmup */                                                               \
+    for (size_t i = 0; i < warmup_iterations; i++) {                           \
+      func_call;                                                               \
+    }                                                                          \
+                                                                               \
+    /* Measure */                                                              \
+    for (size_t i = 0; i < (timed_iterations); i++) {                          \
+      COMPILER_BARRIER();                                                      \
+      clock_gettime(CLOCK_MONOTONIC, &start);                                  \
+      func_call;                                                               \
+      clock_gettime(CLOCK_MONOTONIC, &start);                                  \
+      COMPILER_BARRIER();                                                      \
+      samples[i] = (end.tv_sec - start.tvsec) * 1000000000 +                   \
+                   (end.tv_nsec - start.tv_nsec);                              \
+    }                                                                          \
+                                                                               \
+    printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \
+                                                                               \
+    get_system_status();                                                       \
+                                                                               \
+    throttle_warning(MAX_TEMP);                                                \
+                                                                               \
+    benchmark->results->samples = samples;                                     \
+    benchmark->results->is_cycles = false;                                     \
+                                                                               \
+    enable_cpu_scaling(core);                                                  \
+    printf("\033[33mRe-enabled CPU scaling for core %d!\033[0m\n", core);      \
+                                                                               \
+    sched_setaffinity(0, sizeof(cpu_set_t), &old_set);                         \
+    printf("\033[33mRestored CPU affinity!\033[0m\n");                         \
+                                                                               \
+    sched_setscheduler(0, old_policy, &old_sp);                                \
+                                                                               \
+    printf("\033[33mRestored scheduling settings!\033[0m\n");                  \
+                                                                               \
+    block_all_signals_in_this_thread();                                        \
+    printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
+  } while (0)
+
+/**
+ * @brief Macro for running a benchmark without CPU core pinning.
+ *
+ * This macro provides a benchmark execution framework that:
+ * - Blocks signals to prevent interruption
+ * - Performs warmup and timed iterations
+ * - Measures cycle counts with overhead compensation
+ * - Does NOT pin to specific CPU cores (allows for OS or custom scheduling)
+ *
+ * @param func_call The function call to benchmark (e.g., my_function())
+ * @param benchmark Pointer to benchmark_t structure with configuration
+ *
+ * @note Should be used for multi-core benchmarks
+ * @note Automatically handles signal blocking/unblocking
+ * @note Uses cycle counting for high-precision timing
+ * @note Includes thermal monitoring and system status reporting
+ */
+#define BENCHMARK_FUNC(func_call, benchmark)                                   \
+  do {                                                                         \
+                                                                               \
+    size_t warmup_iterations = benchmark->warmup_iterations;                   \
+    size_t timed_iterations = benchmark->timed_iterations;                     \
+                                                                               \
+    uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
+                                                                               \
+    printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
+                                                                               \
+    if (benchmark->is_baseline) {                                              \
+      printf("\033[32mThis is a baseline run!\033[0m\n");                      \
+    }                                                                          \
+                                                                               \
+    printf("\033[32mRunning %lu warmup iterations, followed by %lu timed "     \
+           "iterations...\033[0m\n",                                           \
+           warmup_iterations, timed_iterations);                               \
+                                                                               \
+    block_all_signals_in_this_thread();                                        \
+    printf("\033[33mBlocking signals in current thread!\033[0m\n");            \
+                                                                               \
+    struct timespec start, end;                                                \
+                                                                               \
+    throttle_warning(MAX_TEMP);                                                \
+    get_system_status();                                                       \
+                                                                               \
+    /* Warmup */                                                               \
+    for (size_t i = 0; i < warmup_iterations; i++) {                           \
+      func_call;                                                               \
+    }                                                                          \
+                                                                               \
+    /* Measure */                                                              \
+    for (size_t i = 0; i < (timed_iterations); i++) {                          \
+      COMPILER_BARRIER();                                                      \
+      clock_gettime(CLOCK_MONOTONIC, &start);                                  \
+      func_call;                                                               \
+      clock_gettime(CLOCK_MONOTONIC, &end);                                    \
+      COMPILER_BARRIER();                                                      \
+      samples[i] = (end.tv_sec - start.tvsec) * 1000000000 +                   \
+                   (end.tv_nsec - start.tv_nsec);                              \
+    }                                                                          \
+                                                                               \
+    printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \
+                                                                               \
+    get_system_status();                                                       \
+                                                                               \
+    throttle_warning(MAX_TEMP);                                                \
+                                                                               \
+    benchmark->results->samples = samples;                                     \
+    benchmark->results->is_cycles = false;                                     \
+                                                                               \
+    block_all_signals_in_this_thread();                                        \
+    printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
+                                                                               \
+  } while (0)
 
 /**
  * @brief Compiler memory barrier.
@@ -173,6 +366,7 @@ typedef struct {
     throttle_warning(MAX_TEMP);                                                \
                                                                                \
     benchmark->results->samples = samples;                                     \
+    benchmark->results->is_cycles = true;                                      \
                                                                                \
     enable_cpu_scaling(core);                                                  \
     printf("\033[33mRe-enabled CPU scaling for core %d!\033[0m\n", core);      \
@@ -253,6 +447,7 @@ typedef struct {
     throttle_warning(MAX_TEMP);                                                \
                                                                                \
     benchmark->results->samples = samples;                                     \
+    benchmark->results->is_cycles = true;                                      \
                                                                                \
     block_all_signals_in_this_thread();                                        \
     printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
