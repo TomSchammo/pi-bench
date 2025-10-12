@@ -13,7 +13,7 @@ BINDIR = bin
 
 # Source files
 SOURCES = main.c
-HEADERS = bench.h stats.h system.h data_processing.h
+HEADERS = $(wildcard include/*.h)
 
 # Object files
 OBJECTS = $(SOURCES:%.c=$(OBJDIR)/%.o)
