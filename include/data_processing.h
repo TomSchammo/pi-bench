@@ -78,8 +78,7 @@ void print_results(benchmark_t **results, size_t count) {
     indices[i] = i;
   }
 
-  // Sort by performance relative to baseline (baseline first, then worst to
-  // best)
+  // Sort by performance: worst to best (higher cycles = worse performance)
   for (size_t i = 0; i < count - 1; i++) {
     for (size_t j = i + 1; j < count; j++) {
       benchmark_t *bench_i = results[indices[i]];
@@ -91,22 +90,11 @@ void print_results(benchmark_t **results, size_t count) {
         continue;
       }
 
-      // Baseline always comes first
-      if (bench_j->is_baseline && !bench_i->is_baseline) {
+      // Sort by performance (higher cycles = worse performance)
+      if (bench_j->results->median > bench_i->results->median) {
         size_t temp = indices[i];
         indices[i] = indices[j];
         indices[j] = temp;
-        continue;
-      }
-
-      // If neither is baseline, sort by performance (higher cycles = worse
-      // performance)
-      if (!bench_i->is_baseline && !bench_j->is_baseline) {
-        if (bench_j->results->median > bench_i->results->median) {
-          size_t temp = indices[i];
-          indices[i] = indices[j];
-          indices[j] = temp;
-        }
       }
     }
   }
@@ -129,22 +117,22 @@ void print_results(benchmark_t **results, size_t count) {
 
     benchmark_result_t *data = bench->results;
     double relative_performance = 1.0;
-    const char *performance_label = "";
 
     if (!bench->is_baseline) {
       relative_performance =
           (double)data->median / (double)baseline->results->median;
-      if (relative_performance > 1.0) {
-        performance_label = " (slower)";
-      } else if (relative_performance < 1.0) {
-        performance_label = " (faster)";
+      if (relative_performance < 1.0) {
+        double speed_increase = 1.0 / relative_performance;
+        printf("%-20s: %8llu cycles (%.2fx) - %.1fx faster\n", bench->name,
+               data->median, relative_performance, speed_increase);
+        continue;
       }
     } else {
-      performance_label = " (baseline)";
+      relative_performance = 1.0;
     }
 
     printf("%-20s: %8llu cycles (%.2fx)%s\n", bench->name, data->median,
-           relative_performance, performance_label);
+           relative_performance, bench->is_baseline ? " - baseline" : "");
   }
 
   printf("========================================\n");
