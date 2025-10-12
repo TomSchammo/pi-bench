@@ -43,11 +43,16 @@ void print_result(benchmark_t *results) {
   printf("Baseline: %s\n", results->is_baseline ? "Yes" : "No");
   printf("\n");
   printf("Statistical Results:\n");
-  printf("  Median: %llu cycles\n", data->median);
-  printf("  Mean:   %.2f cycles\n", data->mean);
-  printf("  StdDev: %.2f cycles\n", data->stddev);
-  printf("  Min:    %llu cycles\n", data->min);
-  printf("  Max:    %llu cycles\n", data->max);
+  printf("  Median: %llu %s\n", data->median,
+         results->results->is_cycles ? "cycles" : "ns");
+  printf("  Mean:   %.2f %s\n", data->mean,
+         results->results->is_cycles ? "cycles" : "ns");
+  printf("  StdDev: %.2f %s\n", data->stddev,
+         results->results->is_cycles ? "cycles" : "ns");
+  printf("  Min:    %llu %s\n", data->min,
+         results->results->is_cycles ? "cycles" : "ns");
+  printf("  Max:    %llu %s\n", data->max,
+         results->results->is_cycles ? "cycles" : "ns");
   printf("========================================\n");
   printf("\n");
 }
@@ -104,8 +109,8 @@ void print_results(benchmark_t **results, size_t count) {
   printf("========================================\n");
   printf("BENCHMARK RESULTS SUMMARY\n");
   printf("========================================\n");
-  printf("Baseline: %s (%.2f cycles)\n", baseline->name,
-         baseline->results->mean);
+  printf("Baseline: %s (%.2f %s)\n", baseline->name, baseline->results->mean,
+         baseline->results->is_cycles ? "cycles" : "ns");
   printf("\n");
 
   // Print results in sorted order
@@ -123,16 +128,18 @@ void print_results(benchmark_t **results, size_t count) {
           (double)data->median / (double)baseline->results->median;
       if (relative_performance < 1.0) {
         double speed_increase = 1.0 / relative_performance;
-        printf("%-20s: %8llu cycles (%.2fx) - %.1fx faster\n", bench->name,
-               data->median, relative_performance, speed_increase);
+        printf("%-20s: %8llu %s (%.2fx) - %.1fx faster\n", bench->name,
+               data->median, data->is_cycles ? "cycles" : "ns",
+               relative_performance, speed_increase);
         continue;
       }
     } else {
       relative_performance = 1.0;
     }
 
-    printf("%-20s: %8llu cycles (%.2fx)%s\n", bench->name, data->median,
-           relative_performance, bench->is_baseline ? " - baseline" : "");
+    printf("%-20s: %8llu %s (%.2fx)%s\n", bench->name, data->median,
+           bench->results->is_cycles ? "cycles" : "ns", relative_performance,
+           bench->is_baseline ? " - baseline" : "");
   }
 
   printf("========================================\n");
