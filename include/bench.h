@@ -146,7 +146,7 @@ typedef struct {
       COMPILER_BARRIER();                                                      \
       clock_gettime(CLOCK_MONOTONIC, &start);                                  \
       func_call;                                                               \
-      clock_gettime(CLOCK_MONOTONIC, &start);                                  \
+      clock_gettime(CLOCK_MONOTONIC, &end);                                    \
       COMPILER_BARRIER();                                                      \
       samples[i] = (end.tv_sec - start.tv_sec) * 1000000000 +                  \
                    (end.tv_nsec - start.tv_nsec);                              \
