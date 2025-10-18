@@ -3,8 +3,23 @@
 
 #include "./bench.h"
 #include "./stats.h"
+#include <cstdio>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+void *get_validation_buffer(const void *const gt, size_t size) {
+  void *buffer = malloc(size);
+  memcpy(buffer, gt, size);
+
+  return buffer;
+}
+
+bool validate(const void *const gt, const void *const buffer, size_t size) {
+  return memcmp(gt, buffer, size) == 0;
+}
 
 void calculate_stats(benchmark_result_t *results, size_t size) {
   uint64_t *samples = results->samples;
