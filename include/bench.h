@@ -5,6 +5,7 @@
 #include "./system.h"
 #include <assert.h>
 #include <fcntl.h>
+#include <linux/perf_event.h>
 #include <pthread.h>
 #include <sched.h>
 #include <signal.h>
@@ -12,7 +13,19 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/syscall.h>
 #include <unistd.h>
+
+/**
+ * @brief Structure to hold file descriptors for L1 cache access and miss
+ * counters.
+ */
+typedef struct {
+  int refs_fd;
+  int miss_fd;
+} cache_counter_t;
 
 /**
  * @brief Structure containing benchmark measurement results and statistics.
@@ -21,17 +34,19 @@
  * metrics from a benchmark run, including central tendency and dispersion
  * measures.
  *
- * samples: Raw timing samples in CPU cycles
- * median: Median timing value in CPU cycles
- * mean: Mean timing value in CPU cycles
- * stddev: Standard deviation of timing values
- * min: Minimum timing value in CPU cycles
- * max: Maximum timing value in CPU cycles
+ * samples:             Raw timing samples in CPU cycles
+ * median:              Median timing value in CPU cycles
+ * cache_miss_rates:    L1 cache miss rates for every timed iteration
+ * mean:                Mean timing value in CPU cycles
+ * stddev:              Standard deviation of timing values
+ * min:                 Minimum timing value in CPU cycles
+ * max:                 Maximum timing value in CPU cycles
  */
 typedef struct {
   uint64_t *samples;
   uint64_t median;
   uint64_t min, max;
+  double *cache_miss_rates;
   double mean, stddev;
   bool is_cycles;
 } benchmark_result_t;
@@ -144,12 +159,15 @@ typedef struct {
     /* Measure */                                                              \
     for (size_t i = 0; i < (timed_iterations); i++) {                          \
       COMPILER_BARRIER();                                                      \
+      cache_counter_t counter = start_l1_cache_miss_counter();                 \
       clock_gettime(CLOCK_MONOTONIC, &start);                                  \
       func_call;                                                               \
       clock_gettime(CLOCK_MONOTONIC, &end);                                    \
+      double miss_rate = stop_l1_cache_miss_counter(&counter);                 \
       COMPILER_BARRIER();                                                      \
       samples[i] = (end.tv_sec - start.tv_sec) * 1000000000 +                  \
                    (end.tv_nsec - start.tv_nsec);                              \
+      cache_miss_rates[i] = miss_rate;                                         \
     }                                                                          \
                                                                                \
     printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \
@@ -628,4 +646,104 @@ static void unblock_all_signals_in_this_thread(void) {
   sigemptyset(&set);
   pthread_sigmask(SIG_UNBLOCK, &set, NULL);
 }
+
+/**
+ * @brief Helper function to encode hardware cache perf event configuration.
+ *
+ * @param cache_id  Cache level/type ID (e.g., PERF_COUNT_HW_CACHE_L1D).
+ * @param op_id     Operation type ID (e.g., OP_READ).
+ * @param result_id Event result type ID (e.g., RESULT_ACCESS, RESULT_MISS).
+ * @return Encoded perf event config value.
+ */
+static inline uint64_t perf_hw_cache_config(int cache_id, int op_id,
+                                            int result_id) {
+  return (cache_id) | (op_id << 8) | (result_id << 16);
+}
+
+/**
+ * @brief Starts L1 data cache miss and reference counters.
+ *
+ * Call this function before entering your timed code section. It initializes
+ * and enables performance counters for L1 data cache accesses and misses, and
+ * returns a @ref cache_counter_t structure containing their associated file
+ * descriptors.
+ *
+ * @return Initialized @ref cache_counter_t with valid file descriptors on
+ * success; -1 on error.
+ */
+cache_counter_t start_l1_cache_miss_counter() {
+  cache_counter_t counter = {-1, -1};
+  struct perf_event_attr pe;
+
+  memset(&pe, 0, sizeof(struct perf_event_attr));
+  pe.type = PERF_TYPE_HW_CACHE;
+  pe.size = sizeof(struct perf_event_attr);
+  pe.disabled = 1;
+  pe.exclude_kernel = 1;
+  pe.exclude_hv = 1;
+
+  // L1 data cache read accesses (PERF_COUNT_HW_CACHE_L1D | OP_READ |
+  // RESULT_ACCESS)
+  pe.config = perf_hw_cache_config(0x0, 0x0, 0x0);
+  counter.refs_fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
+  if (counter.refs_fd == -1) {
+    perror("perf_event_open (L1D refs)");
+    return counter;
+  }
+
+  // L1 data cache read misses (PERF_COUNT_HW_CACHE_L1D | OP_READ | RESULT_MISS)
+  pe.config = perf_hw_cache_config(0x0, 0x0, 0x1);
+  counter.miss_fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
+  if (counter.miss_fd == -1) {
+    perror("perf_event_open (L1D misses)");
+    close(counter.refs_fd);
+    counter.refs_fd = -1;
+    return counter;
+  }
+
+  // Reset and enable both counters
+  ioctl(counter.refs_fd, PERF_EVENT_IOC_RESET, 0);
+  ioctl(counter.refs_fd, PERF_EVENT_IOC_ENABLE, 0);
+  ioctl(counter.miss_fd, PERF_EVENT_IOC_RESET, 0);
+  ioctl(counter.miss_fd, PERF_EVENT_IOC_ENABLE, 0);
+
+  return counter;
+}
+
+/**
+ * @brief Stops L1 cache counters and returns the L1 cache miss rate as a
+ * percentage.
+ *
+ * Call this function after your timed code section has finished. This function
+ * disables and reads the reference and miss counters contained in the @ref
+ * cache_counter_t structure, closes them, and calculates the percentage of
+ * accesses that resulted in L1 cache misses.
+ *
+ * @param counter Pointer to @ref cache_counter_t object whose file descriptors
+ * will be used and closed.
+ * @return L1 cache miss rate as a percentage (returns 0.0 if no accesses were
+ * counted).
+ */
+double stop_l1_cache_miss_counter(cache_counter_t *counter) {
+  long long misses = 0, refs = 0;
+
+  if (counter->refs_fd != -1) {
+    ioctl(counter->refs_fd, PERF_EVENT_IOC_DISABLE, 0);
+    read(counter->refs_fd, &refs, sizeof(long long));
+    close(counter->refs_fd);
+    counter->refs_fd = -1;
+  }
+
+  if (counter->miss_fd != -1) {
+    ioctl(counter->miss_fd, PERF_EVENT_IOC_DISABLE, 0);
+    read(counter->miss_fd, &misses, sizeof(long long));
+    close(counter->miss_fd);
+    counter->miss_fd = -1;
+  }
+
+  if (refs == 0)
+    return 0.0;
+  return 100.0 * misses / (double)refs;
+}
+
 #endif // BENCH_H
