@@ -17,8 +17,17 @@ void *get_validation_buffer(const void *const gt, size_t size) {
   return buffer;
 }
 
-bool validate(const void *const gt, const void *const buffer, size_t size) {
-  return memcmp(gt, buffer, size) == 0;
+bool validate_result(benchmark_t *benchmark, const void *const result,
+                     const void *const gt) {
+
+  if (memcmp(gt, result, benchmark->timed_iterations) == 0) {
+    benchmark->is_valid = true;
+    printf("\033[32mResult of '%s' is valid!\033[0m\n", benchmark->name);
+  } else {
+
+    benchmark->is_valid = false;
+    printf("\033[33mResult of '%s' is not valid!\033[0m\n", benchmark->name);
+  }
 }
 
 void calculate_stats(benchmark_result_t *results, size_t size) {
@@ -131,7 +140,7 @@ void print_results(benchmark_t **results, size_t count) {
   // Print results in sorted order
   for (size_t i = 0; i < count; i++) {
     benchmark_t *bench = results[indices[i]];
-    if (bench == NULL || bench->results == NULL) {
+    if (bench == NULL || bench->results == NULL || !bench->is_valid) {
       continue;
     }
 

@@ -57,11 +57,12 @@ typedef struct {
  * This structure contains all the parameters needed to run a benchmark,
  * including the benchmark name, iteration counts, and result storage.
  *
- * name: Human-readable name of the benchmark
- * warmup_iterations: Number of warmup iterations to run
- * timed_iterations: Number of timed iterations to measure
- * results: Pointer to store benchmark results
- * is_baseline: Flag indicating if this is a baseline benchmark
+ * name:                Human-readable name of the benchmark
+ * warmup_iterations:   Number of warmup iterations to run
+ * timed_iterations:    Number of timed iterations to measure
+ * results:             Pointer to store benchmark results
+ * is_baseline:         Flag indicating if this is a baseline benchmark
+ * validate:            Flag indicating if the benchmark result is valid or not
  */
 typedef struct {
   const char *name;
@@ -69,6 +70,7 @@ typedef struct {
   size_t timed_iterations;
   benchmark_result_t *results;
   bool is_baseline;
+  bool is_valid;
 } benchmark_t;
 
 /**
