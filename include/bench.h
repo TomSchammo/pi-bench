@@ -165,8 +165,8 @@ typedef struct {
       clock_gettime(CLOCK_MONOTONIC, &end);                                    \
       double miss_rate = stop_l1_cache_miss_counter(&counter);                 \
       COMPILER_BARRIER();                                                      \
-      samples[i] = (end.tv_sec - start.tv_sec) * 1000000000 +                  \
-                   (end.tv_nsec - start.tv_nsec);                              \
+      samples[i] = (end.tv_sec - start.tv_sec) * 1000000 +                     \
+                   (end.tv_nsec - start.tv_nsec) / 1000;                       \
       cache_miss_rates[i] = miss_rate;                                         \
     }                                                                          \
                                                                                \
@@ -248,8 +248,8 @@ typedef struct {
       func_call;                                                               \
       clock_gettime(CLOCK_MONOTONIC, &end);                                    \
       COMPILER_BARRIER();                                                      \
-      samples[i] = (end.tv_sec - start.tv_sec) * 1000000000 +                  \
-                   (end.tv_nsec - start.tv_nsec);                              \
+      samples[i] = (end.tv_sec - start.tv_sec) * 1000000 +                     \
+                   (end.tv_nsec - start.tv_nsec) / 1000;                       \
     }                                                                          \
                                                                                \
     printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \

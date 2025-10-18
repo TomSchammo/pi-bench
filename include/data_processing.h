@@ -44,15 +44,15 @@ void print_result(benchmark_t *results) {
   printf("\n");
   printf("Statistical Results:\n");
   printf("  Median: %llu %s\n", data->median,
-         results->results->is_cycles ? "cycles" : "ns");
+         results->results->is_cycles ? "cycles" : "us");
   printf("  Mean:   %.2f %s\n", data->mean,
-         results->results->is_cycles ? "cycles" : "ns");
+         results->results->is_cycles ? "cycles" : "us");
   printf("  StdDev: %.2f %s\n", data->stddev,
-         results->results->is_cycles ? "cycles" : "ns");
+         results->results->is_cycles ? "cycles" : "us");
   printf("  Min:    %llu %s\n", data->min,
-         results->results->is_cycles ? "cycles" : "ns");
+         results->results->is_cycles ? "cycles" : "us");
   printf("  Max:    %llu %s\n", data->max,
-         results->results->is_cycles ? "cycles" : "ns");
+         results->results->is_cycles ? "cycles" : "us");
   printf("========================================\n");
   printf("\n");
 }
@@ -110,7 +110,7 @@ void print_results(benchmark_t **results, size_t count) {
   printf("BENCHMARK RESULTS SUMMARY\n");
   printf("========================================\n");
   printf("Baseline: %s (%.2f %s)\n", baseline->name, baseline->results->mean,
-         baseline->results->is_cycles ? "cycles" : "ns");
+         baseline->results->is_cycles ? "cycles" : "us");
   printf("\n");
 
   // Print results in sorted order
@@ -129,7 +129,7 @@ void print_results(benchmark_t **results, size_t count) {
       if (relative_performance < 1.0) {
         double speed_increase = 1.0 / relative_performance;
         printf("%-20s: %8llu %s (%.2fx) - %.1fx faster\n", bench->name,
-               data->median, data->is_cycles ? "cycles" : "ns",
+               data->median, data->is_cycles ? "cycles" : "us",
                relative_performance, speed_increase);
         continue;
       }
@@ -138,7 +138,7 @@ void print_results(benchmark_t **results, size_t count) {
     }
 
     printf("%-20s: %8llu %s (%.2fx)%s\n", bench->name, data->median,
-           bench->results->is_cycles ? "cycles" : "ns", relative_performance,
+           bench->results->is_cycles ? "cycles" : "us", relative_performance,
            bench->is_baseline ? " - baseline" : "");
   }
 
