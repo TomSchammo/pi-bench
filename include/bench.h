@@ -690,7 +690,9 @@ cache_counter_t start_l1_cache_miss_counter() {
 
   // L1 data cache read accesses (PERF_COUNT_HW_CACHE_L1D | OP_READ |
   // RESULT_ACCESS)
-  pe.config = perf_hw_cache_config(0x0, 0x0, 0x0);
+  pe.config =
+      perf_hw_cache_config(PERF_COUNT_HW_CACHE_L1D, PERF_COUNT_HW_CACHE_OP_READ,
+                           PERF_COUNT_HW_CACHE_RESULT_ACCESS);
   counter.refs_fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
   if (counter.refs_fd == -1) {
     perror("perf_event_open (L1D refs)");
@@ -698,7 +700,9 @@ cache_counter_t start_l1_cache_miss_counter() {
   }
 
   // L1 data cache read misses (PERF_COUNT_HW_CACHE_L1D | OP_READ | RESULT_MISS)
-  pe.config = perf_hw_cache_config(0x0, 0x0, 0x1);
+  pe.config =
+      perf_hw_cache_config(PERF_COUNT_HW_CACHE_L1D, PERF_COUNT_HW_CACHE_OP_READ,
+                           PERF_COUNT_HW_CACHE_RESULT_MISS);
   counter.miss_fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
   if (counter.miss_fd == -1) {
     perror("perf_event_open (L1D misses)");
