@@ -44,10 +44,12 @@ typedef struct {
  */
 typedef struct {
   uint64_t *samples;
-  uint64_t median;
-  uint64_t min, max;
+  uint64_t median_time;
+  uint64_t min_time, max_time;
   double *cache_miss_rates;
-  double mean, stddev;
+  double mean_time, stddev_time;
+  double median_cmr, min_cmr, max_cmr;
+  double mean_cmr, stddev_cmr;
   bool is_cycles;
 } benchmark_result_t;
 
