@@ -7,138 +7,129 @@
 #include <stdint.h>
 
 /**
- * @brief Calculate the arithmetic mean of an array of unsigned 64-bit integers.
+ * @brief Calculate the arithmetic mean of an array.
+ *
+ * Generic macro that works with any arithmetic type (int, float, double, etc.)
  *
  * @param data Pointer to the array of data values
  * @param size Number of elements in the array
  * @return The arithmetic mean of the data, or 0 if size is 0
  */
-[[nodiscard]]
-static uint64_t mean(uint64_t *data, size_t size) {
-
-  if (size == 0)
-    return 0;
-
-  uint64_t sum = 0;
-  for (size_t i = 0; i < size; i++)
-    sum += data[i];
-
-  return sum / size;
-}
+#define mean(data, size)                                                       \
+  ({                                                                           \
+    double _sum = 0;                                                           \
+    for (size_t _i = 0; _i < (size); _i++)                                     \
+      _sum += (data)[_i];                                                      \
+    (size) > 0 ? _sum / (size) : 0;                                            \
+  })
 
 /**
- * @brief Sort an array of unsigned 64-bit integers using selection sort
- * algorithm.
+ * @brief Sort an array using selection sort algorithm.
  *
- * This function sorts the array in-place in ascending order using the selection
+ * Generic macro that works with any comparable type.
+ * This sorts the array in-place in ascending order using the selection
  * sort algorithm, which repeatedly finds the minimum element and places it at
  * the beginning.
  *
  * @param data Pointer to the array to be sorted
  * @param size Number of elements in the array
  */
-void insertion_sort(uint64_t *data, size_t size) {
-  for (size_t i = 0; i < size; i++) {
-    size_t smallest_idx = i;
-    for (size_t j = i + 1; j < size; j++) {
-      if (data[j] < data[smallest_idx]) {
-        smallest_idx = j;
-      }
-    }
-
-    uint64_t tmp = data[i];
-    data[i] = data[smallest_idx];
-    data[smallest_idx] = tmp;
-  }
-}
+#define selection_sort(data, size)                                             \
+  do {                                                                         \
+    for (size_t _i = 0; _i < (size); _i++) {                                   \
+      size_t _smallest_idx = _i;                                               \
+      for (size_t _j = _i + 1; _j < (size); _j++) {                            \
+        if ((data)[_j] < (data)[_smallest_idx]) {                              \
+          _smallest_idx = _j;                                                  \
+        }                                                                      \
+      }                                                                        \
+      typeof(data[0]) _tmp = (data)[_i];                                       \
+      (data)[_i] = (data)[_smallest_idx];                                      \
+      (data)[_smallest_idx] = _tmp;                                            \
+    }                                                                          \
+  } while (0)
 
 /**
- * @brief Calculate the median value of an array of unsigned 64-bit integers.
+ * @brief Calculate the median value of an array.
  *
+ * Generic macro that works with any arithmetic type.
  * The median is the middle value when the array is sorted. For even-sized
  * arrays, the median is the average of the two middle values.
  *
  * @param data Pointer to the array of data values
  * @param size Number of elements in the array
- * @param sort Function pointer to the sorting algorithm to use
+ * @param sort Macro/function to sort the array
  * @return The median value, or 0 if size is 0
  */
-[[nodiscard]]
-static uint64_t median(uint64_t *data, size_t size,
-                       void (*sort)(uint64_t *, size_t)) {
-
-  if (size == 0)
-    return 0;
-
-  sort(data, size);
-
-  const size_t median_idx = size / 2;
-
-  if (size % 2 == 0) {
-
-    const uint64_t lower = data[median_idx];
-    const uint64_t upper = data[median_idx + 1];
-
-    return (upper + lower) / 2;
-  } else {
-    return data[median_idx];
-  }
-}
+#define median(data, size, sort)                                               \
+  ({                                                                           \
+    typeof(data[0]) _result = 0;                                               \
+    if ((size) > 0) {                                                          \
+      sort((data), (size));                                                    \
+      const size_t _median_idx = (size) / 2;                                   \
+      if ((size) % 2 == 0) {                                                   \
+        const typeof(data[0]) _lower = (data)[_median_idx - 1];                \
+        const typeof(data[0]) _upper = (data)[_median_idx];                    \
+        _result = (_upper + _lower) / 2;                                       \
+      } else {                                                                 \
+        _result = (data)[_median_idx];                                         \
+      }                                                                        \
+    }                                                                          \
+    _result;                                                                   \
+  })
 
 /**
- * @brief Calculate the population standard deviation of an array of unsigned
- * 64-bit integers.
+ * @brief Calculate the population standard deviation of an array.
  *
+ * Generic macro that works with any arithmetic type.
  * Standard deviation measures the amount of variation or dispersion in the
  * data. This function calculates the population standard deviation (using N as
  * the divisor).
  *
  * @param data Pointer to the array of data values
  * @param size Number of elements in the array
- * @return The population standard deviation, or 0.0 if size is 0
+ * @return The population standard deviation (as double), or 0.0 if size is 0
  */
-[[nodiscard]]
-static double stddev(uint64_t *data, size_t size) {
-  if (size == 0)
-    return 0.0;
-
-  const uint64_t mean_val = mean(data, size);
-  double sum_squared_diff = 0.0;
-
-  for (size_t i = 0; i < size; i++) {
-    const double diff = (double)data[i] - (double)mean_val;
-    sum_squared_diff += diff * diff;
-  }
-
-  const double variance = sum_squared_diff / size;
-  return sqrt(variance);
-}
+#define stddev(data, size)                                                     \
+  ({                                                                           \
+    double _stddev_result = 0.0;                                               \
+    if ((size) > 0) {                                                          \
+      const double _mean_val = mean((data), (size));                           \
+      double _sum_squared_diff = 0.0;                                          \
+      for (size_t _i = 0; _i < (size); _i++) {                                 \
+        const double _diff = (double)(data)[_i] - (double)_mean_val;           \
+        _sum_squared_diff += _diff * _diff;                                    \
+      }                                                                        \
+      const double _variance = _sum_squared_diff / (size);                     \
+      _stddev_result = sqrt(_variance);                                        \
+    }                                                                          \
+    _stddev_result;                                                            \
+  })
 
 /**
- * @brief Calculate the population variance of an array of unsigned 64-bit
- * integers.
+ * @brief Calculate the population variance of an array.
  *
+ * Generic macro that works with any arithmetic type.
  * Variance measures the average of the squared differences from the mean.
  * This function calculates the population variance (using N as the divisor).
  *
  * @param data Pointer to the array of data values
  * @param size Number of elements in the array
- * @return The population variance, or 0.0 if size is 0
+ * @return The population variance (as double), or 0.0 if size is 0
  */
-[[nodiscard]]
-static double var(uint64_t *data, size_t size) {
-  if (size == 0)
-    return 0.0;
-
-  const uint64_t mean_val = mean(data, size);
-  double sum_squared_diff = 0.0;
-
-  for (size_t i = 0; i < size; i++) {
-    const double diff = (double)data[i] - (double)mean_val;
-    sum_squared_diff += diff * diff;
-  }
-
-  return sum_squared_diff / size;
-}
+#define var(data, size)                                                        \
+  ({                                                                           \
+    double _var_result = 0.0;                                                  \
+    if ((size) > 0) {                                                          \
+      const double _mean_val = mean((data), (size));                           \
+      double _sum_squared_diff = 0.0;                                          \
+      for (size_t _i = 0; _i < (size); _i++) {                                 \
+        const double _diff = (double)(data)[_i] - (double)_mean_val;           \
+        _sum_squared_diff += _diff * _diff;                                    \
+      }                                                                        \
+      _var_result = _sum_squared_diff / (size);                                \
+    }                                                                          \
+    _var_result;                                                               \
+  })
 
 #endif // STATS_H
