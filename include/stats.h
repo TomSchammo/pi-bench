@@ -43,7 +43,7 @@
           _smallest_idx = _j;                                                  \
         }                                                                      \
       }                                                                        \
-      typeof(data[0]) _tmp = (data)[_i];                                       \
+      __typeof__(data[0]) _tmp = (data)[_i];                                   \
       (data)[_i] = (data)[_smallest_idx];                                      \
       (data)[_smallest_idx] = _tmp;                                            \
     }                                                                          \
@@ -63,13 +63,13 @@
  */
 #define median(data, size, sort)                                               \
   ({                                                                           \
-    typeof(data[0]) _result = 0;                                               \
+    __typeof__(data[0]) _result = 0;                                           \
     if ((size) > 0) {                                                          \
       sort((data), (size));                                                    \
       const size_t _median_idx = (size) / 2;                                   \
       if ((size) % 2 == 0) {                                                   \
-        const typeof(data[0]) _lower = (data)[_median_idx - 1];                \
-        const typeof(data[0]) _upper = (data)[_median_idx];                    \
+        const __typeof__(data[0]) _lower = (data)[_median_idx - 1];            \
+        const __typeof__(data[0]) _upper = (data)[_median_idx];                \
         _result = (_upper + _lower) / 2;                                       \
       } else {                                                                 \
         _result = (data)[_median_idx];                                         \
