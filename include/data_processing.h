@@ -94,7 +94,7 @@ void print_result(benchmark_t *results) {
          results->results->is_cycles ? "cycles" : "us");
   printf("  Max:    %llu %s\n", data->max_time,
          results->results->is_cycles ? "cycles" : "us");
-  printf("\nCache Performance:\n");
+  printf("\nCache-Miss Rate:\n");
   printf("  Median: %.2f%% \n", data->median_cmr);
   printf("  Mean:   %.2f%% \n", data->mean_cmr);
   printf("  StdDev: %.2f%% \n", data->stddev_cmr);
