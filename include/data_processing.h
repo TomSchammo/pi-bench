@@ -18,9 +18,9 @@ void *get_validation_buffer(const void *const gt, size_t size) {
 }
 
 void validate_result(benchmark_t *benchmark, const void *const result,
-                     const void *const gt) {
+                     const void *const gt, size_t size) {
 
-  if (memcmp(gt, result, benchmark->timed_iterations) == 0) {
+  if (memcmp(gt, result, size) == 0) {
     benchmark->is_valid = true;
     printf("\033[32mResult of '%s' is valid!\033[0m\n", benchmark->name);
   } else {
