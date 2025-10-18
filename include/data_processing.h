@@ -17,7 +17,7 @@ void *get_validation_buffer(const void *const gt, size_t size) {
   return buffer;
 }
 
-bool validate_result(benchmark_t *benchmark, const void *const result,
+void validate_result(benchmark_t *benchmark, const void *const result,
                      const void *const gt) {
 
   if (memcmp(gt, result, benchmark->timed_iterations) == 0) {
