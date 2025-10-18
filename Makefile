@@ -108,7 +108,7 @@ help:
 	@echo "  make clean          # Clean build files"
 
 # Dependencies
-$(OBJDIR)/main.o: main.c bench.h stats.h system.h data_processing.h
+$(OBJDIR)/main.o: main.c include/bench.h include/stats.h include/system.h include/data_processing.h
 
 # Phony targets
 .PHONY: all run run-sudo debug release install uninstall clean rebuild help

@@ -1,8 +1,8 @@
 
-#include "bench.h"
-#include "data_processing.h"
-#include "stats.h"
-#include "system.h"
+#include "./include/bench.h"
+#include "./include/data_processing.h"
+#include "./include/stats.h"
+#include "./include/system.h"
 #include <stdio.h>
 #include <stdlib.h>
 
