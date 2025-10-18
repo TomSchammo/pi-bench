@@ -105,6 +105,7 @@ typedef struct {
     size_t timed_iterations = benchmark->timed_iterations;                     \
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
+    uint64_t *cache_miss_rates = malloc((timed_iterations) * sizeof(double));  \
                                                                                \
     printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
@@ -181,6 +182,7 @@ typedef struct {
     throttle_warning(MAX_TEMP);                                                \
                                                                                \
     benchmark->results->samples = samples;                                     \
+    benchmark->results->cache_miss_rates = cache_miss_rates;                   \
     benchmark->results->is_cycles = false;                                     \
                                                                                \
     enable_cpu_scaling(core);                                                  \
