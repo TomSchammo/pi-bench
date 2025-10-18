@@ -125,7 +125,7 @@ void print_results(benchmark_t **results, size_t count) {
   }
 
   // Create array of indices for sorting
-  size_t *indices = malloc(count * sizeof(size_t));
+  size_t *indices = (size_t *)malloc(count * sizeof(size_t));
   for (size_t i = 0; i < count; i++) {
     indices[i] = i;
   }
