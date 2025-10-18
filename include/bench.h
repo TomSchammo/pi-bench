@@ -105,7 +105,7 @@ typedef struct {
     size_t timed_iterations = benchmark->timed_iterations;                     \
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
-    uint64_t *cache_miss_rates = malloc((timed_iterations) * sizeof(double));  \
+    double *cache_miss_rates = malloc((timed_iterations) * sizeof(double));    \
                                                                                \
     printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
