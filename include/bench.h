@@ -195,7 +195,7 @@ typedef struct {
                                                                                \
     printf("\033[33mRestored scheduling settings!\033[0m\n");                  \
                                                                                \
-    block_all_signals_in_this_thread();                                        \
+    unblock_all_signals_in_this_thread();                                      \
     printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
   } while (0)
 
@@ -267,7 +267,7 @@ typedef struct {
     benchmark->results->samples = samples;                                     \
     benchmark->results->is_cycles = false;                                     \
                                                                                \
-    block_all_signals_in_this_thread();                                        \
+    unblock_all_signals_in_this_thread();                                      \
     printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
                                                                                \
   } while (0)
@@ -402,7 +402,7 @@ typedef struct {
                                                                                \
     printf("\033[33mRestored scheduling settings!\033[0m\n");                  \
                                                                                \
-    block_all_signals_in_this_thread();                                        \
+    unblock_all_signals_in_this_thread();                                      \
     printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
   } while (0)
 
@@ -473,7 +473,7 @@ typedef struct {
     benchmark->results->samples = samples;                                     \
     benchmark->results->is_cycles = true;                                      \
                                                                                \
-    block_all_signals_in_this_thread();                                        \
+    unblock_all_signals_in_this_thread();                                      \
     printf("\033[33mUnblocking signals in current thread!\033[0m\n");          \
                                                                                \
   } while (0)
