@@ -240,8 +240,10 @@ bool to_csv(benchmark_t **benchmarks, size_t num, const char *dir) {
             "# name: %s\n# timing format: %s\n# is valid: %s\n# warmup runs: "
             "%lu\n# timed runs: %lu\n\ntiming,cache_miss_rate\n",
             name, benchmark->results->is_cycles ? "cycles" : "microseconds",
-            benchmark->validate ? (benchmark->is_valid ? "Yes" : "No")
-                                : "Not Validated",
+            benchmark->is_baseline
+                ? "Baseline"
+                : (benchmark->validate ? (benchmark->is_valid ? "Yes" : "No")
+                                       : "Not Validated"),
             benchmark->warmup_iterations, benchmark->timed_iterations);
 
     for (size_t i = 0; i < benchmark->timed_iterations; i++) {
