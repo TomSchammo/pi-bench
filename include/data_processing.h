@@ -196,4 +196,62 @@ void print_results(benchmark_t **results, size_t count) {
   free(indices);
 }
 
+bool to_csv(benchmark_t **benchmarks, size_t num, const char *dir) {
+
+  for (size_t i = 0; i < num; i++) {
+    benchmark_t *benchmark = benchmarks[i];
+    benchmark_result_t *results = benchmark->results;
+    uint64_t *samples = results->samples;
+    double *cmr = results->cache_miss_rates;
+    const char *name = benchmark->name;
+    size_t len = strlen(name) + 1;
+
+    char *filename = (char *)malloc(len);
+    if (filename == NULL) {
+      fprintf(stderr, "Error: Could not allocate memory for header\n");
+      return false;
+    }
+
+    for (size_t cidx = 0; cidx < len; cidx++) {
+      char c = name[cidx];
+      if (c == ' ')
+        filename[cidx] = '_';
+      else
+        filename[cidx] = c;
+    }
+
+    char path[256];
+
+    int written =
+        snprintf(path, sizeof(path), "%s/benchmark_%s.csv", dir, filename);
+    if (written >= sizeof(path)) {
+      fprintf(stderr, "Error: Path too long\n");
+      free(filename);
+      return false;
+    }
+
+    FILE *csv = fopen(path, "w");
+    if (csv == NULL) {
+      fprintf(stderr, "Error: Could not open file %s for writing\n", dir);
+      return false;
+    }
+
+    fprintf(csv,
+            "# name: %s\n# timing format: %s\n# is valid: %s\n# warmup runs: "
+            "%lu\n# timed runs: %lu\n\ntiming,cache_miss_rate\n",
+            name, benchmark->results->is_cycles ? "cycles" : "microseconds",
+            benchmark->validate ? (benchmark->is_valid ? "Yes" : "No")
+                                : "Not Validated",
+            benchmark->warmup_iterations, benchmark->timed_iterations);
+
+    for (size_t i = 0; i < benchmark->timed_iterations; i++) {
+      fprintf(csv, "%llu,%0.2f\n", samples[i], cmr[i]);
+    }
+
+    fclose(csv);
+    free(filename);
+  }
+
+  return true;
+}
 #endif // DATA_PROCESSING_H
