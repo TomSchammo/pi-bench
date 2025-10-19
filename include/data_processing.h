@@ -43,10 +43,10 @@ void calculate_stats(benchmark_result_t *results, size_t size) {
   results->stddev_cmr = stddev(cmrs, size);
 
   uint64_t min_time = samples[0], max_time = samples[0];
-  uint64_t min_cmr = samples[0], max_cmr = samples[0];
+  double min_cmr = cmrs[0], max_cmr = cmrs[0];
   for (size_t i = 1; i < size; i++) {
     uint64_t val = samples[i];
-    uint64_t cmr = cmrs[i];
+    double cmr = cmrs[i];
 
     if (val > max_time)
       max_time = val;
