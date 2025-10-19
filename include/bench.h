@@ -107,13 +107,13 @@ typedef struct {
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
     double *cache_miss_rates = malloc((timed_iterations) * sizeof(double));    \
                                                                                \
-    printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
+    printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
     if (benchmark->is_baseline) {                                              \
       printf("\033[32mThis is a baseline run!\033[0m\n");                      \
     }                                                                          \
                                                                                \
-    printf("\033[32mRunning %lu warmup iterations, followed by %lu timed "     \
+    printf("\033[34mRunning %lu warmup iterations, followed by %lu timed "     \
            "iterations...\033[0m\n",                                           \
            warmup_iterations, timed_iterations);                               \
                                                                                \
@@ -224,13 +224,13 @@ typedef struct {
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
                                                                                \
-    printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
+    printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
     if (benchmark->is_baseline) {                                              \
       printf("\033[32mThis is a baseline run!\033[0m\n");                      \
     }                                                                          \
                                                                                \
-    printf("\033[32mRunning %lu warmup iterations, followed by %lu timed "     \
+    printf("\033[34mRunning %lu warmup iterations, followed by %lu timed "     \
            "iterations...\033[0m\n",                                           \
            warmup_iterations, timed_iterations);                               \
                                                                                \
@@ -319,13 +319,13 @@ typedef struct {
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
                                                                                \
-    printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
+    printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
     if (benchmark->is_baseline) {                                              \
       printf("\033[32mThis is a baseline run!\033[0m\n");                      \
     }                                                                          \
                                                                                \
-    printf("\033[32mRunning %lu warmup iterations, followed by %lu timed "     \
+    printf("\033[34mRunning %lu warmup iterations, followed by %lu timed "     \
            "iterations...\033[0m\n",                                           \
            warmup_iterations, timed_iterations);                               \
                                                                                \
@@ -431,13 +431,13 @@ typedef struct {
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
                                                                                \
-    printf("\033[32mRunning benchmark: %s\033[0m\n", benchmark->name);         \
+    printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
     if (benchmark->is_baseline) {                                              \
       printf("\033[32mThis is a baseline run!\033[0m\n");                      \
     }                                                                          \
                                                                                \
-    printf("\033[32mRunning %lu warmup iterations, followed by %lu timed "     \
+    printf("\033[34mRunning %lu warmup iterations, followed by %lu timed "     \
            "iterations...\033[0m\n",                                           \
            warmup_iterations, timed_iterations);                               \
                                                                                \
