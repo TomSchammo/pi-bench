@@ -745,7 +745,8 @@ cache_counter_t start_l1_cache_miss_counter() {
   pe.config =
       perf_hw_cache_config(PERF_COUNT_HW_CACHE_L1D, PERF_COUNT_HW_CACHE_OP_READ,
                            PERF_COUNT_HW_CACHE_RESULT_MISS);
-  counter.miss_fd = syscall(__NR_perf_event_open, &pe, 0, -1, -1, 0);
+  counter.miss_fd =
+      syscall(__NR_perf_event_open, &pe, 0, -1, counter.refs_fd, 0);
   if (counter.miss_fd == -1) {
     perror("perf_event_open (L1D misses)");
     close(counter.refs_fd);
@@ -754,10 +755,8 @@ cache_counter_t start_l1_cache_miss_counter() {
   }
 
   // Reset and enable both counters
-  ioctl(counter.refs_fd, PERF_EVENT_IOC_RESET, 0);
-  ioctl(counter.refs_fd, PERF_EVENT_IOC_ENABLE, 0);
-  ioctl(counter.miss_fd, PERF_EVENT_IOC_RESET, 0);
-  ioctl(counter.miss_fd, PERF_EVENT_IOC_ENABLE, 0);
+  ioctl(counter.refs_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+  ioctl(counter.refs_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
 
   return counter;
 }
@@ -780,14 +779,13 @@ double stop_l1_cache_miss_counter(cache_counter_t *counter) {
   long long misses = 0, refs = 0;
 
   if (counter->refs_fd != -1) {
-    ioctl(counter->refs_fd, PERF_EVENT_IOC_DISABLE, 0);
+    ioctl(counter->refs_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
     read(counter->refs_fd, &refs, sizeof(long long));
     close(counter->refs_fd);
     counter->refs_fd = -1;
   }
 
   if (counter->miss_fd != -1) {
-    ioctl(counter->miss_fd, PERF_EVENT_IOC_DISABLE, 0);
     read(counter->miss_fd, &misses, sizeof(long long));
     close(counter->miss_fd);
     counter->miss_fd = -1;
@@ -795,6 +793,7 @@ double stop_l1_cache_miss_counter(cache_counter_t *counter) {
 
   if (refs == 0)
     return 0.0;
+
   return 100.0 * misses / (double)refs;
 }
 
