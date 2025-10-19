@@ -43,6 +43,9 @@ typedef struct {
  * max:                 Maximum timing value in CPU cycles
  */
 typedef struct {
+  void *output_buffer;
+  void *gt;
+  size_t size;
   uint64_t *samples;
   uint64_t median_time;
   uint64_t min_time, max_time;
@@ -64,7 +67,8 @@ typedef struct {
  * timed_iterations:    Number of timed iterations to measure
  * results:             Pointer to store benchmark results
  * is_baseline:         Flag indicating if this is a baseline benchmark
- * validate:            Flag indicating if the benchmark result is valid or not
+ * validate:            Flag indicating if the result should be validated
+ * is_validate:         Flag indicating if the benchmark result is valid
  */
 typedef struct {
   const char *name;
@@ -72,6 +76,7 @@ typedef struct {
   size_t timed_iterations;
   benchmark_result_t *results;
   bool is_baseline;
+  bool validate;
   bool is_valid;
 } benchmark_t;
 
@@ -147,6 +152,43 @@ typedef struct {
     sched_setscheduler(0, SCHED_FIFO, &sp);                                    \
                                                                                \
     printf("\033[33mSet scheduling settings!\033[0m\n");                       \
+                                                                               \
+    if (benchmark->is_baseline) {                                              \
+      if (benchmark->results->output_buffer != NULL) {                         \
+        func_call;                                                             \
+                                                                               \
+        memcpy(benchmark->results->gt, benchmark->results->output_buffer,      \
+               benchmark->results->size);                                      \
+        printf("\033[32mSucessfully set ground truth!\033[0m\n");              \
+      } else {                                                                 \
+        printf("\033[33mCould not set ground truth!\033[0m\n");                \
+      }                                                                        \
+    } else {                                                                   \
+      if (benchmark->validate) {                                               \
+        if (benchmark->results->output_buffer != NULL &&                       \
+            benchmark->results->gt != NULL) {                                  \
+          func_call;                                                           \
+                                                                               \
+          if (memcmp(benchmark->results->gt,                                   \
+                     benchmark->results->output_buffer,                        \
+                     benchmark->results->size) == 0) {                         \
+            benchmark->is_valid = true;                                        \
+                                                                               \
+            printf("\033[32mResult of '%s' is valid!\033[0m\n",                \
+                   benchmark->name);                                           \
+          } else {                                                             \
+            benchmark->is_valid = false;                                       \
+                                                                               \
+            printf("\033[33mResult of '%s' is not valid!\033[0m\n",            \
+                   benchmark->name);                                           \
+          }                                                                    \
+        } else {                                                               \
+          printf("\033[33mCannot validate benchmark %s! Result or output "     \
+                 "buffer is missing\033[0m\n",                                 \
+                 benchmark->name);                                             \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
                                                                                \
     block_all_signals_in_this_thread();                                        \
     printf("\033[33mBlocking signals in current thread!\033[0m\n");            \
