@@ -35,7 +35,7 @@
  * @param size Number of elements in the array
  */
 #define selection_sort(data, size)                                             \
-  do {                                                                         \
+  ({                                                                           \
     for (size_t _i = 0; _i < (size); _i++) {                                   \
       size_t _smallest_idx = _i;                                               \
       for (size_t _j = _i + 1; _j < (size); _j++) {                            \
@@ -47,7 +47,8 @@
       (data)[_i] = (data)[_smallest_idx];                                      \
       (data)[_smallest_idx] = _tmp;                                            \
     }                                                                          \
-  } while (0)
+    (void)0;                                                                   \
+  })
 
 /**
  * @brief Calculate the median value of an array.
