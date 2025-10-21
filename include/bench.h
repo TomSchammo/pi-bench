@@ -402,6 +402,7 @@ typedef struct {
     size_t timed_iterations = benchmark->timed_iterations;                     \
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
+    double *cache_miss_rates = malloc((timed_iterations) * sizeof(double));    \
                                                                                \
     printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
@@ -444,6 +445,43 @@ typedef struct {
                                                                                \
     printf("\033[33mSet scheduling settings!\033[0m\n");                       \
                                                                                \
+    if (benchmark->is_baseline) {                                              \
+      if (benchmark->results->output_buffer != NULL) {                         \
+        func_call;                                                             \
+                                                                               \
+        memcpy(benchmark->results->gt, benchmark->results->output_buffer,      \
+               benchmark->results->size);                                      \
+        printf("\033[32mSucessfully set ground truth!\033[0m\n");              \
+      } else {                                                                 \
+        printf("\033[33mCould not set ground truth!\033[0m\n");                \
+      }                                                                        \
+    } else {                                                                   \
+      if (benchmark->validate) {                                               \
+        if (benchmark->results->output_buffer != NULL &&                       \
+            benchmark->results->gt != NULL) {                                  \
+          func_call;                                                           \
+                                                                               \
+          if (memcmp(benchmark->results->gt,                                   \
+                     benchmark->results->output_buffer,                        \
+                     benchmark->results->size) == 0) {                         \
+            benchmark->is_valid = true;                                        \
+                                                                               \
+            printf("\033[32mResult of '%s' is valid!\033[0m\n",                \
+                   benchmark->name);                                           \
+          } else {                                                             \
+            benchmark->is_valid = false;                                       \
+                                                                               \
+            printf("\033[33mResult of '%s' is not valid!\033[0m\n",            \
+                   benchmark->name);                                           \
+          }                                                                    \
+        } else {                                                               \
+          printf("\033[33mCannot validate benchmark %s! Result or output "     \
+                 "buffer is missing\033[0m\n",                                 \
+                 benchmark->name);                                             \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
     block_all_signals_in_this_thread();                                        \
     printf("\033[33mBlocking signals in current thread!\033[0m\n");            \
                                                                                \
@@ -460,11 +498,14 @@ typedef struct {
     /* Measure */                                                              \
     for (size_t i = 0; i < (timed_iterations); i++) {                          \
       COMPILER_BARRIER();                                                      \
+      cache_counter_t counter = start_l1_cache_miss_counter();                 \
       uint64_t start = get_cycles();                                           \
       func_call;                                                               \
       uint64_t end = get_cycles();                                             \
+      double miss_rate = stop_l1_cache_miss_counter(&counter);                 \
       COMPILER_BARRIER();                                                      \
       samples[i] = (end - start) - cycle_count_overhead;                       \
+      cache_miss_rates[i] = miss_rate;                                         \
     }                                                                          \
                                                                                \
     printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \
@@ -474,6 +515,7 @@ typedef struct {
     throttle_warning(MAX_TEMP);                                                \
                                                                                \
     benchmark->results->samples = samples;                                     \
+    benchmark->results->cache_miss_rates = cache_miss_rates;                   \
     benchmark->results->is_cycles = true;                                      \
                                                                                \
     enable_cpu_scaling(core);                                                  \
@@ -514,6 +556,7 @@ typedef struct {
     size_t timed_iterations = benchmark->timed_iterations;                     \
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
+    double *cache_miss_rates = malloc((timed_iterations) * sizeof(double));    \
                                                                                \
     printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
@@ -524,6 +567,43 @@ typedef struct {
     printf("\033[34mRunning %lu warmup iterations, followed by %lu timed "     \
            "iterations...\033[0m\n",                                           \
            warmup_iterations, timed_iterations);                               \
+                                                                               \
+    if (benchmark->is_baseline) {                                              \
+      if (benchmark->results->output_buffer != NULL) {                         \
+        func_call;                                                             \
+                                                                               \
+        memcpy(benchmark->results->gt, benchmark->results->output_buffer,      \
+               benchmark->results->size);                                      \
+        printf("\033[32mSucessfully set ground truth!\033[0m\n");              \
+      } else {                                                                 \
+        printf("\033[33mCould not set ground truth!\033[0m\n");                \
+      }                                                                        \
+    } else {                                                                   \
+      if (benchmark->validate) {                                               \
+        if (benchmark->results->output_buffer != NULL &&                       \
+            benchmark->results->gt != NULL) {                                  \
+          func_call;                                                           \
+                                                                               \
+          if (memcmp(benchmark->results->gt,                                   \
+                     benchmark->results->output_buffer,                        \
+                     benchmark->results->size) == 0) {                         \
+            benchmark->is_valid = true;                                        \
+                                                                               \
+            printf("\033[32mResult of '%s' is valid!\033[0m\n",                \
+                   benchmark->name);                                           \
+          } else {                                                             \
+            benchmark->is_valid = false;                                       \
+                                                                               \
+            printf("\033[33mResult of '%s' is not valid!\033[0m\n",            \
+                   benchmark->name);                                           \
+          }                                                                    \
+        } else {                                                               \
+          printf("\033[33mCannot validate benchmark %s! Result or output "     \
+                 "buffer is missing\033[0m\n",                                 \
+                 benchmark->name);                                             \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
                                                                                \
     block_all_signals_in_this_thread();                                        \
     printf("\033[33mBlocking signals in current thread!\033[0m\n");            \
@@ -541,11 +621,14 @@ typedef struct {
     /* Measure */                                                              \
     for (size_t i = 0; i < (timed_iterations); i++) {                          \
       COMPILER_BARRIER();                                                      \
+      cache_counter_t counter = start_l1_cache_miss_counter();                 \
       uint64_t start = get_cycles();                                           \
       func_call;                                                               \
       uint64_t end = get_cycles();                                             \
+      double miss_rate = stop_l1_cache_miss_counter(&counter);                 \
       COMPILER_BARRIER();                                                      \
       samples[i] = (end - start) - cycle_count_overhead;                       \
+      cache_miss_rates[i] = miss_rate;                                         \
     }                                                                          \
                                                                                \
     printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \
@@ -555,6 +638,7 @@ typedef struct {
     throttle_warning(MAX_TEMP);                                                \
                                                                                \
     benchmark->results->samples = samples;                                     \
+    benchmark->results->cache_miss_rates = cache_miss_rates;                   \
     benchmark->results->is_cycles = true;                                      \
                                                                                \
     unblock_all_signals_in_this_thread();                                      \
