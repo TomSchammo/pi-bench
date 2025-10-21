@@ -265,6 +265,7 @@ typedef struct {
     size_t timed_iterations = benchmark->timed_iterations;                     \
                                                                                \
     uint64_t *samples = malloc((timed_iterations) * sizeof(uint64_t));         \
+    double *cache_miss_rates = malloc((timed_iterations) * sizeof(double));    \
                                                                                \
     printf("\033[34mRunning benchmark: %s\033[0m\n", benchmark->name);         \
                                                                                \
@@ -337,6 +338,7 @@ typedef struct {
       COMPILER_BARRIER();                                                      \
       samples[i] = (end.tv_sec - start.tv_sec) * 1000000 +                     \
                    (end.tv_nsec - start.tv_nsec) / 1000;                       \
+      cache_miss_rates[i] = miss_rate;                                         \
     }                                                                          \
                                                                                \
     printf("\033[32mCollected %lu samples!\033[0m\n", timed_iterations);       \
@@ -346,6 +348,7 @@ typedef struct {
     throttle_warning(MAX_TEMP);                                                \
                                                                                \
     benchmark->results->samples = samples;                                     \
+    benchmark->results->cache_miss_rates = cache_miss_rates;                   \
     benchmark->results->is_cycles = false;                                     \
                                                                                \
     unblock_all_signals_in_this_thread();                                      \
