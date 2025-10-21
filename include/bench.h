@@ -276,6 +276,43 @@ typedef struct {
            "iterations...\033[0m\n",                                           \
            warmup_iterations, timed_iterations);                               \
                                                                                \
+    if (benchmark->is_baseline) {                                              \
+      if (benchmark->results->output_buffer != NULL) {                         \
+        func_call;                                                             \
+                                                                               \
+        memcpy(benchmark->results->gt, benchmark->results->output_buffer,      \
+               benchmark->results->size);                                      \
+        printf("\033[32mSucessfully set ground truth!\033[0m\n");              \
+      } else {                                                                 \
+        printf("\033[33mCould not set ground truth!\033[0m\n");                \
+      }                                                                        \
+    } else {                                                                   \
+      if (benchmark->validate) {                                               \
+        if (benchmark->results->output_buffer != NULL &&                       \
+            benchmark->results->gt != NULL) {                                  \
+          func_call;                                                           \
+                                                                               \
+          if (memcmp(benchmark->results->gt,                                   \
+                     benchmark->results->output_buffer,                        \
+                     benchmark->results->size) == 0) {                         \
+            benchmark->is_valid = true;                                        \
+                                                                               \
+            printf("\033[32mResult of '%s' is valid!\033[0m\n",                \
+                   benchmark->name);                                           \
+          } else {                                                             \
+            benchmark->is_valid = false;                                       \
+                                                                               \
+            printf("\033[33mResult of '%s' is not valid!\033[0m\n",            \
+                   benchmark->name);                                           \
+          }                                                                    \
+        } else {                                                               \
+          printf("\033[33mCannot validate benchmark %s! Result or output "     \
+                 "buffer is missing\033[0m\n",                                 \
+                 benchmark->name);                                             \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
     block_all_signals_in_this_thread();                                        \
     printf("\033[33mBlocking signals in current thread!\033[0m\n");            \
                                                                                \
@@ -292,9 +329,11 @@ typedef struct {
     /* Measure */                                                              \
     for (size_t i = 0; i < (timed_iterations); i++) {                          \
       COMPILER_BARRIER();                                                      \
+      cache_counter_t counter = start_l1_cache_miss_counter();                 \
       clock_gettime(CLOCK_MONOTONIC, &start);                                  \
       func_call;                                                               \
       clock_gettime(CLOCK_MONOTONIC, &end);                                    \
+      double miss_rate = stop_l1_cache_miss_counter(&counter);                 \
       COMPILER_BARRIER();                                                      \
       samples[i] = (end.tv_sec - start.tv_sec) * 1000000 +                     \
                    (end.tv_nsec - start.tv_nsec) / 1000;                       \
