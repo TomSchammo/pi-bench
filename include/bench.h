@@ -395,7 +395,7 @@ typedef struct {
  * @note Uses cycle counting for high-precision timing
  * @note Includes thermal monitoring and system status reporting
  */
-#define BENCHMARK_FUNC_PINNED_CYCLES(func_call, benchmark, core)               \
+#define BENCHMARK_FUNC_CYCLES_PINNED(func_call, benchmark, core)               \
   do {                                                                         \
                                                                                \
     size_t warmup_iterations = benchmark->warmup_iterations;                   \
