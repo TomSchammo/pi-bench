@@ -232,7 +232,7 @@ bool to_csv(benchmark_t **benchmarks, size_t num, const char *dir) {
 
     FILE *csv = fopen(path, "w");
     if (csv == NULL) {
-      fprintf(stderr, "Error: Could not open file %s for writing\n", dir);
+      fprintf(stderr, "Error: Could not open file %s for writing\n", path);
       return false;
     }
 
