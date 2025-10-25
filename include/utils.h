@@ -1,3 +1,5 @@
+#ifndef UTILS_H
+#define UTILS_H
 
 #include "./bench.h"
 #include <stdint.h>
@@ -44,3 +46,5 @@ void cleanup_benchmark(benchmark_t *benchmark, bool free_output_buffer) {
   free(benchmark->results);
   free(benchmark);
 }
+
+#endif // UTILS_H
