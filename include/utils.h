@@ -5,9 +5,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-benchmark_t *setup_benchmark(const char *name, size_t warmup_iterations,
-                             size_t timed_iterations, bool is_baseline,
-                             bool validate, void *output_buffer, size_t size) {
+static inline benchmark_t *setup_benchmark(const char *name,
+                                           size_t warmup_iterations,
+                                           size_t timed_iterations,
+                                           bool is_baseline, bool validate,
+                                           void *output_buffer, size_t size) {
   benchmark_t *benchmark = (benchmark_t *)malloc(sizeof(benchmark_t));
   benchmark->name = name;
   benchmark->warmup_iterations = warmup_iterations;
@@ -37,7 +39,8 @@ benchmark_t *setup_benchmark(const char *name, size_t warmup_iterations,
   benchmark->results = results;
 }
 
-void cleanup_benchmark(benchmark_t *benchmark, bool free_output_buffer) {
+static inline void cleanup_benchmark(benchmark_t *benchmark,
+                                     bool free_output_buffer) {
   if (free_output_buffer) {
     free(benchmark->results->output_buffer);
   }
