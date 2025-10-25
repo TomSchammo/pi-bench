@@ -86,7 +86,7 @@ static inline void system_wait() {
     return 0;
 
   uint64_t freq;
-  if (fscanf(f, "%llu", &freq) != 1) {
+  if (fscanf(f, "%lu", &freq) != 1) {
     fclose(f);
     return 0;
   }
@@ -146,9 +146,9 @@ static inline void system_wait() {
   uint64_t mem_total = 0, mem_available = 0;
 
   while (fgets(line, sizeof(line), f)) {
-    if (sscanf(line, "MemTotal: %llu kB", &mem_total) == 1)
+    if (sscanf(line, "MemTotal: %lu kB", &mem_total) == 1)
       continue;
-    if (sscanf(line, "MemAvailable: %llu kB", &mem_available) == 1)
+    if (sscanf(line, "MemAvailable: %lu kB", &mem_available) == 1)
       break;
   }
   fclose(f);
@@ -235,7 +235,7 @@ static inline void get_system_status() {
 
   for (int i = 0; i < cpu_cores; i++) {
     uint64_t cpu_freq = get_cpu_frequency(i);
-    printf("CPU %d Frequency: %llu MHz\n", i, cpu_freq);
+    printf("CPU %d Frequency: %lu MHz\n", i, cpu_freq);
   }
 
   float cpu_temp = get_cpu_temperature();
@@ -250,7 +250,7 @@ static inline void get_system_status() {
     printf("\033[31mCPU Temperature: %f C\033[0m\n", cpu_temp);
   }
 
-  printf("Load Average: %f\nMemory Usage: %llu kB\n", load_avg, memory_usage);
+  printf("Load Average: %f\nMemory Usage: %lu kB\n", load_avg, memory_usage);
 }
 
 #endif // SYSTEM_H

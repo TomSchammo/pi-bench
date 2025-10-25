@@ -84,15 +84,15 @@ void print_result(benchmark_t *results) {
   printf("\n");
   printf("Statistical Results:\n");
   printf("Time:\n");
-  printf("  Median: %llu %s\n", data->median_time,
+  printf("  Median: %lu %s\n", data->median_time,
          results->results->is_cycles ? "cycles" : "us");
   printf("  Mean:   %.2f %s\n", data->mean_time,
          results->results->is_cycles ? "cycles" : "us");
   printf("  StdDev: %.2f %s\n", data->stddev_time,
          results->results->is_cycles ? "cycles" : "us");
-  printf("  Min:    %llu %s\n", data->min_time,
+  printf("  Min:    %lu %s\n", data->min_time,
          results->results->is_cycles ? "cycles" : "us");
-  printf("  Max:    %llu %s\n", data->max_time,
+  printf("  Max:    %lu %s\n", data->max_time,
          results->results->is_cycles ? "cycles" : "us");
   printf("\nCache-Miss Rate:\n");
   printf("  Median: %.2f%% \n", data->median_cmr);
@@ -176,7 +176,7 @@ void print_results(benchmark_t **results, size_t count) {
           (double)data->median_time / (double)baseline->results->median_time;
       if (relative_performance < 1.0) {
         double speed_increase = 1.0 / relative_performance;
-        printf("%-20s: %8llu %s (%.2fx) - %.1fx faster\n", bench->name,
+        printf("%-20s: %8lu %s (%.2fx) - %.1fx faster\n", bench->name,
                data->median_time, data->is_cycles ? "cycles" : "us",
                relative_performance, speed_increase);
         continue;
@@ -185,7 +185,7 @@ void print_results(benchmark_t **results, size_t count) {
       relative_performance = 1.0;
     }
 
-    printf("%-20s: %8llu %s (%.2fx)%s\n", bench->name, data->median_time,
+    printf("%-20s: %8lu %s (%.2fx)%s\n", bench->name, data->median_time,
            bench->results->is_cycles ? "cycles" : "us", relative_performance,
            bench->is_baseline ? " - baseline" : "");
   }
@@ -247,7 +247,7 @@ bool to_csv(benchmark_t **benchmarks, size_t num, const char *dir) {
             benchmark->warmup_iterations, benchmark->timed_iterations);
 
     for (size_t i = 0; i < benchmark->timed_iterations; i++) {
-      fprintf(csv, "%llu,%0.2f\n", samples[i], cmr[i]);
+      fprintf(csv, "%lu,%0.2f\n", samples[i], cmr[i]);
     }
 
     fclose(csv);
