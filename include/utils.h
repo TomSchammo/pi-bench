@@ -36,7 +36,10 @@ static inline benchmark_t *setup_benchmark(const char *name,
     results->output_buffer = calloc(size, 1);
   }
 
+  results->size = size;
   benchmark->results = results;
+
+  return benchmark;
 }
 
 static inline void cleanup_benchmark(benchmark_t *benchmark,
