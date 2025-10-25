@@ -800,7 +800,7 @@ static inline void setup_thread_attributes(int cpu_core, pthread_attr_t *attr) {
  * @note Blocks all signals using SIG_BLOCK with a full signal set
  * @note Should be paired with unblock_all_signals_in_this_thread()
  */
-static void block_all_signals_in_this_thread(void) {
+static inline void block_all_signals_in_this_thread(void) {
   sigset_t set;
   sigfillset(&set);
   pthread_sigmask(SIG_BLOCK, &set, NULL);
@@ -815,7 +815,7 @@ static void block_all_signals_in_this_thread(void) {
  *
  * @note Unblocks all signals using SIG_UNBLOCK with an empty signal set
  */
-static void unblock_all_signals_in_this_thread(void) {
+static inline void unblock_all_signals_in_this_thread(void) {
   sigset_t set;
   sigemptyset(&set);
   pthread_sigmask(SIG_UNBLOCK, &set, NULL);
@@ -845,7 +845,7 @@ static inline uint64_t perf_hw_cache_config(int cache_id, int op_id,
  * @return Initialized @ref cache_counter_t with valid file descriptors on
  * success; -1 on error.
  */
-cache_counter_t start_l1_cache_miss_counter() {
+static inline cache_counter_t start_l1_cache_miss_counter() {
   cache_counter_t counter = {-1, -1};
   struct perf_event_attr pe;
 
@@ -901,7 +901,7 @@ cache_counter_t start_l1_cache_miss_counter() {
  * @return L1 cache miss rate as a percentage (returns 0.0 if no accesses were
  * counted).
  */
-double stop_l1_cache_miss_counter(cache_counter_t *counter) {
+static inline double stop_l1_cache_miss_counter(cache_counter_t *counter) {
   long long misses = 0, refs = 0;
 
   if (counter->refs_fd != -1) {
