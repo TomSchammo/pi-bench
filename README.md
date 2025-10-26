@@ -81,3 +81,4 @@ CLEANUP();
 # TODO
 
 - Add example `main.c`
+- Add a way to kill in-progress benchmarks
